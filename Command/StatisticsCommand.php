@@ -71,7 +71,7 @@ class StatisticsCommand extends ContainerAwareCommand
                 $routes = $this->getAllRoutes();
 
                 foreach ($stats as $route => $count) {
-                    $position = 1 + $routes[$route];
+                    $position = $routes[$route];
                     $output->writeln(sprintf($format, $count, $route, $position));
                 }
             } else {
@@ -84,24 +84,17 @@ class StatisticsCommand extends ContainerAwareCommand
 
     /**
      * @return array
-     * @throws \RuntimeException
      */
     private function getAllRoutes()
     {
         $routeCollection = $this->getContainer()->get('router')->getRouteCollection();
-        $dumper = new PhpMatcherDumper($routeCollection);
-        $matcherCode = $dumper->dump(array());
+        $routes = array();
 
-        if (preg_match_all('#^\s*// (\S+)$#m', $matcherCode, $matches)) {
-            $routes = array_flip($matches[1]);
-
-            if (count($matches[1]) !== count($routes)) {
-                throw new \RuntimeException('Duplicate route comments found');
-            }
-
-            return $routes;
+        $i = 0;
+        foreach ($routeCollection->all() as $name => $route) {
+            $routes[$name] = ++$i;
         }
 
-        throw new \RuntimeException('Could not determine the route order');
+        return $routes;
     }
 }
