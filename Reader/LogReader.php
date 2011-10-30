@@ -9,23 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Secotrust\Bundle\RouteStatisticsBundle\Log;
+namespace Secotrust\Bundle\RouteStatisticsBundle\Reader;
 
-abstract class Reader
+interface LogReader
 {
-    protected $stats = array();
-
-    /**
-     * @return array
-     */
-    public function getStatistics()
-    {
-        return $this->stats;
-    }
-
     /**
      * @abstract
      * @param string $line
      */
-    abstract public function readLine($line);
+    function readLine($line);
 }

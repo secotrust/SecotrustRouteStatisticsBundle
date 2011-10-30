@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Secotrust\Bundle\RouteStatisticsBundle\Log;
+namespace Secotrust\Bundle\RouteStatisticsBundle\Reader;
 
 use Symfony\Component\Routing\Router;
 use Symfony\Component\Routing\RequestContext;

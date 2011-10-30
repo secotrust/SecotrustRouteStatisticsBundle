@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Secotrust\Bundle\RouteStatisticsBundle\Log;
+namespace Secotrust\Bundle\RouteStatisticsBundle\Reader;
 
-class SymfonyReader extends Reader
+class SymfonyReader extends Reader implements LogReader
 {
     /**
      * @param string $line

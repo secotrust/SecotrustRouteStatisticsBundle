@@ -11,8 +11,10 @@
 
 namespace Secotrust\Bundle\RouteStatisticsBundle\Command;
 
-use Secotrust\Bundle\RouteStatisticsBundle\Log\RegexReader;
-use Secotrust\Bundle\RouteStatisticsBundle\Log\SymfonyReader;
+use Secotrust\Bundle\RouteStatisticsBundle\Reader\LogReader;
+use Secotrust\Bundle\RouteStatisticsBundle\Reader\RegexReader;
+use Secotrust\Bundle\RouteStatisticsBundle\Reader\SymfonyReader;
+use Secotrust\Bundle\RouteStatisticsBundle\Reader\ProfilerReader;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -44,8 +46,8 @@ class StatisticsCommand extends ContainerAwareCommand
     {
         $this->setName('router:statistics');
         $this->setDescription('Displays route match statistics');
-        $this->addArgument('filename', InputArgument::REQUIRED, 'Path to the log file');
-        $this->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Format of the log file, one of apache, nginx, symfony or a custom regular expression', 'symfony');
+        $this->addArgument('filename', InputArgument::OPTIONAL, 'Path to the log file');
+        $this->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Format of the log file, one of apache, nginx, symfony or a custom regular expression', 'profiler');
         $this->addOption('prefix', null, InputOption::VALUE_OPTIONAL, 'URL log prefix, for example "/app_dev.php"', null);
     }
 
@@ -56,46 +58,56 @@ class StatisticsCommand extends ContainerAwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $filename = $input->getArgument('filename');
+        $reader = $this->getReader($input);
+
+        if ($reader instanceof LogReader) {
+            /** @var \Secotrust\Bundle\RouteStatisticsBundle\Reader\LogReader $reader */
+            $filename = $input->getArgument('filename');
+            if (is_readable($filename) && $handle = fopen($filename, 'r')) {
+                while (!feof($handle)) {
+                    $line = fgets($handle, 4096);
+                    $reader->readLine($line);
+                }
+                fclose($handle);
+            } else {
+                throw new FileNotFoundException($filename);
+            }
+        }
+
+        if ($stats = $reader->getStatistics()) {
+            arsort($stats);
+
+            $format = sprintf('<info>%% %uu</info>: %%s <comment>(#%%u)</comment>', strlen(reset($stats)));
+            $routes = $this->getAllRoutes();
+
+            foreach ($stats as $route => $count) {
+                $position = $routes[$route];
+                $output->writeln(sprintf($format, $count, $route, $position));
+            }
+        } else {
+            $output->writeln('<error>Could not find any matching records, maybe you should specify a prefix or the format is wrong?</error>');
+        }
+    }
+
+    /**
+     * @param \Symfony\Component\Console\Input\InputInterface $input
+     * @return \Secotrust\Bundle\RouteStatisticsBundle\Reader\Reader
+     */
+    private function getReader(InputInterface $input)
+    {
         $format = $input->getOption('format');
         $prefix = $input->getOption('prefix');
 
-        if (is_readable($filename) && $handle = fopen($filename, 'r')) {
-            switch ($format) {
-                case 'apache':
-                case 'nginx':
-                    $reader = new RegexReader($this->getContainer()->get('router'), $prefix, '#(?<=")(\w+) ([^"]+)(?= )#');
-                    break;
-                case 'symfony':
-                    $reader = new SymfonyReader();
-                    break;
-                default:
-                    $reader = new RegexReader($this->getContainer()->get('router'), $prefix, $format);
-                    break;
-            }
-
-            while (!feof($handle)) {
-                $line = fgets($handle, 4096);
-                $reader->readLine($line);
-            }
-
-            fclose($handle);
-
-            if ($stats = $reader->getStatistics()) {
-                arsort($stats);
-
-                $format = sprintf('<info>%% %uu</info>: %%s <comment>(#%%u)</comment>', strlen(reset($stats)));
-                $routes = $this->getAllRoutes();
-
-                foreach ($stats as $route => $count) {
-                    $position = $routes[$route];
-                    $output->writeln(sprintf($format, $count, $route, $position));
-                }
-            } else {
-                $output->writeln('<error>Could not find any matching records, maybe you should specify a prefix or the format is wrong?</error>');
-            }
-        } else {
-            throw new FileNotFoundException($filename);
+        switch ($format) {
+            case 'apache':
+            case 'nginx':
+                return new RegexReader($this->getContainer()->get('router'), $prefix, '#(?<=")(\w+) ([^"]+)(?= )#');
+            case 'profiler':
+                return new ProfilerReader($this->getContainer()->get('profiler'));
+            case 'symfony':
+                return new SymfonyReader();
+            default:
+                return new RegexReader($this->getContainer()->get('router'), $prefix, $format);
         }
     }
 
