@@ -2,9 +2,9 @@
 
 ## About ##
 
-This bundle scans your application or web server log files and displays an
-ordered overview of the matched routes. You can use this output to optimize
-the order of the routes to speed up the matching.
+This bundle scans your log files or the profiler data and displays an ordered
+overview of the matched routes. You can use this output to optimize the order
+of the routes to speed up the matching.
 
 ## Installation ##
 
