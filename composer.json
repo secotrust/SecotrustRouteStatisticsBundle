@@ -1,0 +1,16 @@
+{
+    "name": "secotrust/route-statistics-bundle",
+    "type": "symfony-bundle",
+    "description": "This Symfony2 bundle lets you analyze your logs or profiler data to rank your routes.",
+    "keywords": ["symfony", "route", "routing", "performance"],
+    "homepage": "https://github.com/secotrust/SecotrustRouteStatisticsBundle",
+    "license": "MIT",
+    "authors": [{
+        "name": "Henrik Westphal",
+        "email": "henrik.westphal@gmail.com"
+    }],
+    "require": {
+        "php": ">=5.3.2",
+        "symfony/symfony": ">=2.0.4"
+    }
+}
