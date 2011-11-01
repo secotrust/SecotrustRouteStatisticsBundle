@@ -12,5 +12,9 @@
     "require": {
         "php": ">=5.3.2",
         "symfony/symfony": ">=2.0.4"
-    }
+    },
+    "autoload": {
+        "psr-0": { "Secotrust\\Bundle\\RouteStatisticsBundle": "" }
+    },
+    "target-dir": "Secotrust/Bundle/RouteStatisticsBundle"
 }
